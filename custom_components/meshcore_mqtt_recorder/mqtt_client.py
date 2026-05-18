@@ -6,6 +6,7 @@ Step 3 — see CLAUDE.md §MQTT Client for full spec:
   - Reconnection: exponential backoff, cap ~60 s
   - Topic pattern: meshcore/{IATA}/+/packets
 """
+
 from __future__ import annotations
 
 

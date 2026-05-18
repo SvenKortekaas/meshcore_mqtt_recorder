@@ -6,6 +6,7 @@ Step 5 — see CLAUDE.md §Packet Decoding and §Channel Key Derivation:
   - Registration: MeshCoreKeyStore.add_channel_secrets([hex_key, ...])
   - Payload type filtering: PayloadType.GroupText only (never hard-code int values)
 """
+
 from __future__ import annotations
 
 

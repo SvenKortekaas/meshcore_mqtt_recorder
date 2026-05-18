@@ -1,4 +1,8 @@
-"""MeshCore pipeline coordinator — ties MQTT client, envelope parser, and decoder together."""
+"""MeshCore pipeline coordinator.
+
+Ties the MQTT client, envelope parser, and decoder together.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -14,7 +18,7 @@ class MeshCoreCoordinator:
     Step 3 — wire MeshCoreMqttClient here.
     Step 4 — add envelope parsing + dedup cache.
     Step 5 — add MeshCoreDecoder + key store.
-    Steps 7–10 — fan out to sensor updates, events, logbook, JSONL storage.
+    Steps 7-10 — fan out to sensor updates, events, logbook, JSONL storage.
     """
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:

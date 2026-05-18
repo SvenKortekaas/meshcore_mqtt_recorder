@@ -1,4 +1,5 @@
 """Config flow for MeshCore MQTT Recorder."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -9,6 +10,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNA
 from homeassistant.helpers import selector
 
 from .const import (
+    _LOGGER,
     CHANNEL_NAME_MAX_LENGTH,
     CHANNEL_NAME_REGEX,
     CONF_CHANNELS,
@@ -20,7 +22,6 @@ from .const import (
     DEFAULT_WS_PATH,
     DOMAIN,
     IATA_REGEX,
-    _LOGGER,
 )
 
 _USER_SCHEMA = vol.Schema(
@@ -72,9 +73,7 @@ class MeshCoreMqttRecorderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 #   - Spin up aiomqtt.Client with ~10 s timeout
                 #   - On TimeoutError/OSError: errors["base"] = "cannot_connect"
                 #   - On auth rejection (rc=5): errors["base"] = "invalid_auth"
-                unique_id = (
-                    f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}:{iata}"
-                )
+                unique_id = f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}:{iata}"
                 await self.async_set_unique_id(unique_id)
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
@@ -115,8 +114,7 @@ class MeshCoreMqttRecorderOptionsFlow(config_entries.OptionsFlow):
             invalid = [
                 ch
                 for ch in channels
-                if not CHANNEL_NAME_REGEX.match(ch)
-                or len(ch) > CHANNEL_NAME_MAX_LENGTH
+                if not CHANNEL_NAME_REGEX.match(ch) or len(ch) > CHANNEL_NAME_MAX_LENGTH
             ]
             if invalid:
                 _LOGGER.warning("Invalid channel name(s) submitted: %s", invalid)
@@ -125,9 +123,7 @@ class MeshCoreMqttRecorderOptionsFlow(config_entries.OptionsFlow):
                 # TODO Step 6: hot-reload key store + subscriptions without entry reload
                 return self.async_create_entry(title="", data=user_input)
 
-        current_channels: list[str] = self._config_entry.options.get(
-            CONF_CHANNELS, []
-        )
+        current_channels: list[str] = self._config_entry.options.get(CONF_CHANNELS, [])
 
         return self.async_show_form(
             step_id="init",

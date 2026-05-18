@@ -5,6 +5,7 @@ Step 7 — one sensor entity per configured hashtag channel:
   - Attributes: sender, timestamp, msg_id, full_text, last_messages (last 20),
     snr, rssi, observer, path_length
 """
+
 from __future__ import annotations
 
 import logging

@@ -3,6 +3,7 @@
 Step 9 — register a human-readable logbook description for
 meshcore_message_received events so they render nicely in the Logbook UI.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

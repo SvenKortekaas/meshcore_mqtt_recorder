@@ -5,6 +5,7 @@ Step 10 — see CLAUDE.md §Long-Term History:
   - One JSON object per line, UTF-8, no rotation in v1
   - Each line: decoded message + envelope metadata + channel name + Unix epoch timestamp
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -24,5 +25,5 @@ class MeshCoreStorage:
         end: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        """Return historical records for a channel, optionally filtered by time range."""
+        """Return history for a channel, optionally filtered by time range."""
         raise NotImplementedError("TODO Step 11")

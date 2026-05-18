@@ -8,11 +8,39 @@ select = [
 ]
 
 ignore = [
-    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
-    "D203",   # no-blank-line-before-class (incompatible with formatter)
-    "D212",   # multi-line-summary-first-line (incompatible with formatter)
-    "COM812", # incompatible with formatter
-    "ISC001", # incompatible with formatter
+    # --- formatter conflicts ---
+    "COM812", # conflicts with ruff formatter
+    "ISC001", # conflicts with ruff formatter
+
+    # --- pydocstyle: pick D211 + D212 convention (summary on first line) ---
+    "D203",   # conflicts with D211 (no-blank-line-before-class); keep D211
+    "D213",   # conflicts with D212 (summary on first line); keep D212
+
+    # --- typing ---
+    "ANN401", # typing.Any is acceptable in early skeletons and HA internals
+
+    # --- TODO / FIX markers (CLAUDE.md build-step workflow) ---
+    "FIX002", # "line contains TODO" — our # TODO Step N: markers are intentional workflow tags
+    "TD002",  # "missing author in TODO" — we use # TODO Step N: format, not # TODO(author):
+    "TD003",  # "missing issue link" — build steps are the tracking mechanism, not GH issues
+    "TD004",  # "missing colon in TODO" — ruff expects # TODO: ...; our format puts a label first
+
+    # --- exception style ---
+    "EM101",  # string literal in exception — NotImplementedError stubs are intentional
+    "EM102",  # f-string in exception — same reasoning as EM101
+    "TRY003", # long raise messages are fine; we keep them descriptive in stubs
+
+    # --- stub signatures ---
+    # ARG001: scaffold phase only — revisit once stubs become real code
+    "ARG001", # unused function args — stubs declare full HA API signatures ahead of implementation
+    "PLR0913", # too many arguments — HA setup signatures (setup_entry, options flow) exceed default limit
+]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "ANN",  # no type annotations required in tests
+    "D",    # no docstring requirements in tests
+    "S",    # security rules (e.g. S101 assert-used) not applicable in pytest
 ]
 
 [lint.flake8-pytest-style]

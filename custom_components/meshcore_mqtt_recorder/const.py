@@ -1,4 +1,5 @@
 """Constants for MeshCore MQTT Recorder."""
+
 from __future__ import annotations
 
 import re
@@ -8,7 +9,8 @@ _LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "meshcore_mqtt_recorder"
 
-# Custom config-entry keys (CONF_HOST, CONF_PORT, CONF_USERNAME, CONF_PASSWORD come from homeassistant.const)
+# Custom config-entry keys; CONF_HOST, CONF_PORT, CONF_USERNAME, CONF_PASSWORD
+# are imported from homeassistant.const where needed
 CONF_WS_PATH = "ws_path"
 CONF_IATA = "iata"
 
@@ -30,7 +32,7 @@ DEDUP_TTL_SECONDS = 300
 
 # JSONL history storage
 STORAGE_SUBDIR = "meshcore_mqtt_recorder"
-HISTORY_SENSOR_MESSAGES = 20        # last-N messages kept in sensor attributes
+HISTORY_SENSOR_MESSAGES = 20  # last-N messages kept in sensor attributes
 SERVICE_GET_HISTORY = "get_history"
 HISTORY_DEFAULT_LIMIT = 100
 HISTORY_MAX_LIMIT = 1000
@@ -48,5 +50,5 @@ CHANNEL_NAME_REGEX: re.Pattern[str] = re.compile(
 )
 CHANNEL_NAME_MAX_LENGTH = 30
 
-# Validation — IATA region codes: 2–4 uppercase letters
+# Validation — IATA region codes: 2-4 uppercase letters
 IATA_REGEX: re.Pattern[str] = re.compile(r"^[A-Z]{2,4}$")

@@ -5,6 +5,7 @@ Step 4 — see CLAUDE.md §Envelope Parsing + Deduplication:
   - Deduplicate using the envelope hash field with a TTL cache.
   - Dedup check MUST happen BEFORE calling the decoder.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

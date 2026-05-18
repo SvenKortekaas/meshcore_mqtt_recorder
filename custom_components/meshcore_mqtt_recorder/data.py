@@ -1,4 +1,5 @@
 """Custom types for MeshCore MQTT Recorder."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

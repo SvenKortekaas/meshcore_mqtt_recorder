@@ -4,6 +4,7 @@ Step 11 — register the get_history service:
   - Parameters: channel, start (optional ISO timestamp), end (optional),
     limit (default 100, max 1000)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
