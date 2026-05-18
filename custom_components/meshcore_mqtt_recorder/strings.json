@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to MeshCore MQTT",
+        "description": "Enter the connection details for your MeshCore MQTT broker.",
+        "data": {
+          "host": "Broker host",
+          "port": "Port",
+          "ws_path": "WebSocket path",
+          "username": "Username",
+          "password": "Password",
+          "iata": "IATA region code"
+        },
+        "data_description": {
+          "host": "Hostname of the MQTT broker (e.g. subscriber.dutchmeshcore.nl)",
+          "port": "TCP port, typically 443 for WebSocket over TLS",
+          "ws_path": "WebSocket endpoint path (e.g. /mqtt)",
+          "iata": "2–4 uppercase letters identifying the mesh region (e.g. AMS)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the MQTT broker. Check host, port, and network.",
+      "invalid_auth": "Invalid username or password.",
+      "invalid_iata": "IATA code must be 2–4 uppercase letters (e.g. AMS).",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This broker and region are already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "MeshCore MQTT Recorder — Channels",
+        "description": "Enter the hashtag channel names you want to monitor (without the # prefix). Only lowercase letters, digits, and interior hyphens are allowed.",
+        "data": {
+          "channels": "Channels"
+        }
+      }
+    },
+    "error": {
+      "invalid_channel_name": "One or more channel names are invalid. Use lowercase letters, digits, and interior hyphens only (no leading, trailing, or consecutive hyphens; max 30 characters)."
+    }
+  }
+}

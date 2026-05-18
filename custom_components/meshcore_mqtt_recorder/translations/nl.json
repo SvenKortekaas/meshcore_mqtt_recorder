@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verbinden met MeshCore MQTT",
+        "description": "Voer de verbindingsgegevens in voor uw MeshCore MQTT-broker.",
+        "data": {
+          "host": "Brokerhost",
+          "port": "Poort",
+          "ws_path": "WebSocket-pad",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord",
+          "iata": "IATA-regiocode"
+        },
+        "data_description": {
+          "host": "Hostnaam van de MQTT-broker (bijv. subscriber.dutchmeshcore.nl)",
+          "port": "TCP-poort, meestal 443 voor WebSocket over TLS",
+          "ws_path": "WebSocket-eindpuntpad (bijv. /mqtt)",
+          "iata": "2–4 hoofdletters die de mesh-regio aanduiden (bijv. AMS)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met de MQTT-broker. Controleer host, poort en netwerk.",
+      "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord.",
+      "invalid_iata": "IATA-code moet uit 2–4 hoofdletters bestaan (bijv. AMS).",
+      "unknown": "Er is een onverwachte fout opgetreden."
+    },
+    "abort": {
+      "already_configured": "Deze broker en regio zijn al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "MeshCore MQTT Recorder — Kanalen",
+        "description": "Voer de hashtag-kanaalnamen in die u wilt volgen (zonder het #-voorvoegsel). Alleen kleine letters, cijfers en interne koppeltekens zijn toegestaan.",
+        "data": {
+          "channels": "Kanalen"
+        }
+      }
+    },
+    "error": {
+      "invalid_channel_name": "Een of meer kanaalnamen zijn ongeldig. Gebruik alleen kleine letters, cijfers en interne koppeltekens (geen aan- of afsluitende koppeltekens of opeenvolgende koppeltekens; max. 30 tekens)."
+    }
+  }
+}

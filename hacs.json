@@ -1,0 +1,5 @@
+{
+    "name": "MeshCore MQTT Recorder",
+    "homeassistant": "2024.6.0",
+    "hacs": "2.0.5"
+}

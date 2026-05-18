@@ -1,0 +1,15 @@
+{
+  "domain": "meshcore_mqtt_recorder",
+  "name": "MeshCore MQTT Recorder",
+  "version": "0.1.0",
+  "codeowners": ["@svenkortekaas"],
+  "config_flow": true,
+  "documentation": "https://github.com/svenkortekaas/meshcore_mqtt_recorder",
+  "issue_tracker": "https://github.com/svenkortekaas/meshcore_mqtt_recorder/issues",
+  "iot_class": "cloud_push",
+  "requirements": [
+    "aiomqtt>=2.3.0",
+    "meshcoredecoder>=0.3.0"
+  ],
+  "dependencies": []
+}

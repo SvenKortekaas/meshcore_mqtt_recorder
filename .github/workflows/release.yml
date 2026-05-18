@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version in manifest.json
+        run: |
+          jq '.version = "${{ steps.version.outputs.version }}"' \
+            custom_components/meshcore_mqtt_recorder/manifest.json > tmp.json
+          mv tmp.json custom_components/meshcore_mqtt_recorder/manifest.json
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add custom_components/meshcore_mqtt_recorder/manifest.json
+          git commit -m "chore: bump manifest version to ${{ steps.version.outputs.version }}"
+          git push origin HEAD:main
+
+      - name: Create release ZIP
+        run: |
+          cd custom_components
+          zip -r ../meshcore_mqtt_recorder.zip meshcore_mqtt_recorder/
+
+      - name: Publish GitHub release
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            meshcore_mqtt_recorder.zip \
+            --title "MeshCore MQTT Recorder ${{ github.ref_name }}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
