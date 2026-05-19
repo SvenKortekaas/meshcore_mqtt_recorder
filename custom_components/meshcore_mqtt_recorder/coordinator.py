@@ -13,8 +13,11 @@ from .const import (
     _LOGGER,
     CONF_IATA,
     CONF_WS_PATH,
+    DEDUP_TTL_SECONDS,
     MQTT_TOPIC_PATTERN,
 )
+from .dedup import HashDedupCache
+from .envelope import EnvelopeParseError, parse_envelope
 from .mqtt_client import MeshCoreMqttClient
 
 if TYPE_CHECKING:
@@ -28,7 +31,7 @@ class MeshCoreCoordinator:
     """Orchestrates the per-message pipeline for one config entry.
 
     Step 3 — owns MeshCoreMqttClient and the background task.
-    Step 4 — add envelope parsing + dedup cache.
+    Step 4 — envelope parsing + dedup cache.
     Step 5 — add MeshCoreDecoder + key store.
     Steps 7-10 — fan out to sensor updates, events, logbook, JSONL storage.
     """
@@ -47,6 +50,7 @@ class MeshCoreCoordinator:
             topic=topic,
             on_message=self._handle_message,
         )
+        self._dedup = HashDedupCache(DEDUP_TTL_SECONDS)
 
     def async_start(self) -> None:
         """Spawn the MQTT background task tied to this config entry."""
@@ -57,15 +61,27 @@ class MeshCoreCoordinator:
         )
 
     async def _handle_message(self, message: aiomqtt.Message) -> None:
-        """Step 3: log raw message. Step 4 adds JSON parsing and dedup."""
+        """Parse envelope, deduplicate, and log new packets."""
         payload = (
             bytes(message.payload)
             if isinstance(message.payload, (bytes, bytearray))
             else b""
         )
+
+        try:
+            envelope = parse_envelope(payload)
+        except EnvelopeParseError as exc:
+            _LOGGER.debug("meshcore mqtt: envelope parse error: %s", exc)
+            return
+
+        if self._dedup.is_duplicate(envelope.hash):
+            return
+
         _LOGGER.debug(
-            "meshcore mqtt: topic=%s bytes=%d preview=%s",
-            message.topic,
-            len(payload),
-            payload[:80].hex(),
+            "meshcore mqtt: NEW origin=%s hash=%s type=%s snr=%s raw_len=%dB",
+            envelope.origin,
+            envelope.hash[:8],
+            envelope.packet_type,
+            envelope.snr,
+            len(envelope.raw) // 2,
         )
