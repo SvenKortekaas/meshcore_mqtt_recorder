@@ -18,6 +18,7 @@ from .const import (
     CONF_WS_PATH,
     DEDUP_TTL_SECONDS,
     EVENT_MESSAGE_RECEIVED,
+    HISTORY_DEFAULT_LIMIT,
     MQTT_TOPIC_PATTERN,
 )
 from .decoder import MeshCoreChannelDecoder
@@ -28,6 +29,7 @@ from .storage import MeshCoreStorage
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Any
 
     import aiomqtt
     from homeassistant.core import HomeAssistant
@@ -132,6 +134,18 @@ class MeshCoreCoordinator:
                 self._listeners[channel].remove(callback)
 
         return _remove
+
+    async def async_get_history(
+        self,
+        channel: str,
+        start: str | None = None,
+        end: str | None = None,
+        limit: int = HISTORY_DEFAULT_LIMIT,
+    ) -> list[dict[str, Any]]:
+        """Return recorded history for *channel* from persistent storage."""
+        return await self._storage.async_get_history(
+            channel, start=start, end=end, limit=limit
+        )
 
     async def _on_options_update(
         self, _hass: HomeAssistant, entry: MeshCoreConfigEntry

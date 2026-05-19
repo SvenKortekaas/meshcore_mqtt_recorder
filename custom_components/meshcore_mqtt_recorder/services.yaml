@@ -1,2 +1,37 @@
-# Service definitions for MeshCore MQTT Recorder.
-# Step 11 — get_history service definition will be added here.
+get_history:
+  name: Get channel message history
+  description: >
+    Query the recorded JSONL message history for a MeshCore hashtag channel.
+    Returns the most-recent matching messages (newest first).
+  fields:
+    channel:
+      name: Channel
+      description: "Hashtag channel name without '#' (e.g. \"general\")"
+      required: true
+      example: general
+      selector:
+        text:
+    start:
+      name: Start time
+      description: ISO 8601 timestamp — only return messages at or after this time.
+      required: false
+      example: "2025-01-01T00:00:00+00:00"
+      selector:
+        text:
+    end:
+      name: End time
+      description: ISO 8601 timestamp — only return messages at or before this time.
+      required: false
+      example: "2025-12-31T23:59:59+00:00"
+      selector:
+        text:
+    limit:
+      name: Limit
+      description: Maximum number of messages to return (1–1000, default 100).
+      required: false
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 1000
+          mode: box
