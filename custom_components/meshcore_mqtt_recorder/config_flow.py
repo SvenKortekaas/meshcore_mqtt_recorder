@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import ssl
 from typing import Any
 
+import aiomqtt
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
@@ -16,6 +19,7 @@ from .const import (
     CONF_CHANNELS,
     CONF_IATA,
     CONF_WS_PATH,
+    CONNECTION_TIMEOUT,
     DEFAULT_HOST,
     DEFAULT_IATA,
     DEFAULT_PORT,
@@ -23,6 +27,37 @@ from .const import (
     DOMAIN,
     IATA_REGEX,
 )
+
+
+async def _validate_connection(data: dict[str, Any]) -> str:
+    """Attempt a live broker connection; return '' on success or an error key."""
+    tls_context = ssl.create_default_context()
+    try:
+        async with asyncio.timeout(CONNECTION_TIMEOUT):
+            async with aiomqtt.Client(
+                hostname=data[CONF_HOST],
+                port=int(data[CONF_PORT]),
+                transport="websockets",
+                websocket_path=data[CONF_WS_PATH],
+                tls_context=tls_context,
+                username=data[CONF_USERNAME],
+                password=data[CONF_PASSWORD],
+            ):
+                pass
+    except TimeoutError:
+        return "cannot_connect"
+    except aiomqtt.MqttCodeError as exc:
+        if exc.rc in (4, 5):  # CONNACK: bad credentials (4) or not authorised (5)
+            return "invalid_auth"
+        return "cannot_connect"
+    except (OSError, aiomqtt.MqttError):
+        return "cannot_connect"
+    except Exception:  # noqa: BLE001
+        _LOGGER.exception("Unexpected error during MQTT connection validation")
+        return "unknown"
+    else:
+        return ""
+
 
 _USER_SCHEMA = vol.Schema(
     {
@@ -69,17 +104,19 @@ class MeshCoreMqttRecorderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not IATA_REGEX.match(iata):
                 errors[CONF_IATA] = "invalid_iata"
             else:
-                # TODO Step 2: real connection validation
-                #   - Spin up aiomqtt.Client with ~10 s timeout
-                #   - On TimeoutError/OSError: errors["base"] = "cannot_connect"
-                #   - On auth rejection (rc=5): errors["base"] = "invalid_auth"
-                unique_id = f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}:{iata}"
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=f"MeshCore {iata}",
-                    data=user_input,
-                )
+                error_key = await _validate_connection(user_input)
+                if error_key:
+                    errors["base"] = error_key
+                else:
+                    unique_id = (
+                        f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}:{iata}"
+                    )
+                    await self.async_set_unique_id(unique_id)
+                    self._abort_if_unique_id_configured()
+                    return self.async_create_entry(
+                        title=f"MeshCore {iata}",
+                        data=user_input,
+                    )
 
         return self.async_show_form(
             step_id="user",

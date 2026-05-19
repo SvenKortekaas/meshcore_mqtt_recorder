@@ -50,5 +50,8 @@ CHANNEL_NAME_REGEX: re.Pattern[str] = re.compile(
 )
 CHANNEL_NAME_MAX_LENGTH = 30
 
+# Connection validation timeout in seconds
+CONNECTION_TIMEOUT = 10
+
 # Validation — IATA region codes: 2-4 uppercase letters
 IATA_REGEX: re.Pattern[str] = re.compile(r"^[A-Z]{2,4}$")
