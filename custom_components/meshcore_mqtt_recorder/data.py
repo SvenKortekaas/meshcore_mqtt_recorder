@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
+    from .coordinator import MeshCoreCoordinator
 
 type MeshCoreConfigEntry = ConfigEntry[MeshCoreData]
 
@@ -16,4 +17,4 @@ type MeshCoreConfigEntry = ConfigEntry[MeshCoreData]
 class MeshCoreData:
     """Runtime data stored on the config entry."""
 
-    # TODO Step 3: coordinator: MeshCoreCoordinator
+    coordinator: MeshCoreCoordinator

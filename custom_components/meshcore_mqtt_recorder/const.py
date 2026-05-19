@@ -53,5 +53,9 @@ CHANNEL_NAME_MAX_LENGTH = 30
 # Connection validation timeout in seconds
 CONNECTION_TIMEOUT = 10
 
+# MQTT reconnection backoff in seconds: doubles each attempt, capped at MAX
+RECONNECT_DELAY_INITIAL = 5
+RECONNECT_DELAY_MAX = 60
+
 # Validation — IATA region codes: 2-4 uppercase letters
 IATA_REGEX: re.Pattern[str] = re.compile(r"^[A-Z]{2,4}$")
