@@ -5,6 +5,7 @@ Ties the MQTT client, envelope parser, and decoder together.
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
@@ -23,10 +24,14 @@ from .envelope import EnvelopeParseError, parse_envelope
 from .mqtt_client import MeshCoreMqttClient
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import aiomqtt
     from homeassistant.core import HomeAssistant
 
     from .data import MeshCoreConfigEntry
+    from .decoder import ChannelMessage
+    from .envelope import Envelope
 
 
 class MeshCoreCoordinator:
@@ -57,6 +62,9 @@ class MeshCoreCoordinator:
         self._decoder: MeshCoreChannelDecoder | None = (
             MeshCoreChannelDecoder(channels) if channels else None
         )
+        self._listeners: dict[
+            str, list[Callable[[ChannelMessage, Envelope], None]]
+        ] = {}
         entry.async_on_unload(entry.add_update_listener(self._on_options_update))
 
     def async_start(self) -> None:
@@ -67,26 +75,37 @@ class MeshCoreCoordinator:
             name=f"meshcore_mqtt_{self.entry.entry_id}",
         )
 
+    def add_listener(
+        self,
+        channel: str,
+        callback: Callable[[ChannelMessage, Envelope], None],
+    ) -> Callable[[], None]:
+        """Register *callback* for decoded messages on *channel*.
+
+        Returns an unsubscribe callable; call it in async_will_remove_from_hass.
+        """
+        self._listeners.setdefault(channel, []).append(callback)
+
+        def _remove() -> None:
+            with contextlib.suppress(KeyError, ValueError):
+                self._listeners[channel].remove(callback)
+
+        return _remove
+
     async def _on_options_update(
         self, _hass: HomeAssistant, entry: MeshCoreConfigEntry
     ) -> None:
-        """Rebuild channel decoder on options update; MQTT client stays running."""
-        new_channels: list[str] = list(entry.options.get(CONF_CHANNELS, []))
-        try:
-            new_decoder = MeshCoreChannelDecoder(new_channels) if new_channels else None
-        except Exception:  # noqa: BLE001
-            _LOGGER.error(
-                "meshcore mqtt: failed to rebuild channel decoder;"
-                " keeping existing configuration",
-                exc_info=True,
-            )
-            return
-        self._decoder = new_decoder
-        channel_summary = ", ".join(sorted(new_channels)) if new_channels else "(none)"
+        """Reload the config entry when options change.
+
+        A full reload rebuilds coordinator, key store, and sensor entities atomically.
+        Channel list changes are infrequent; the brief MQTT reconnect is acceptable.
+        """
         _LOGGER.info(
-            "meshcore mqtt: channel list updated — %d channel(s) active: %s",
-            len(new_channels),
-            channel_summary,
+            "meshcore mqtt: options updated — scheduling entry reload to"
+            " rebuild sensor entities"
+        )
+        self.hass.async_create_task(
+            self.hass.config_entries.async_reload(entry.entry_id)
         )
 
     async def _handle_message(self, message: aiomqtt.Message) -> None:
@@ -130,3 +149,13 @@ class MeshCoreCoordinator:
             envelope.origin,
             envelope.snr,
         )
+
+        for cb in list(self._listeners.get(msg.channel, [])):
+            try:
+                cb(msg, envelope)
+            except Exception:  # noqa: BLE001
+                _LOGGER.warning(
+                    "meshcore mqtt: listener error for channel #%s",
+                    msg.channel,
+                    exc_info=True,
+                )
