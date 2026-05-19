@@ -57,6 +57,7 @@ class MeshCoreCoordinator:
         self._decoder: MeshCoreChannelDecoder | None = (
             MeshCoreChannelDecoder(channels) if channels else None
         )
+        entry.async_on_unload(entry.add_update_listener(self._on_options_update))
 
     def async_start(self) -> None:
         """Spawn the MQTT background task tied to this config entry."""
@@ -64,6 +65,28 @@ class MeshCoreCoordinator:
             self.hass,
             self._client.async_run(),
             name=f"meshcore_mqtt_{self.entry.entry_id}",
+        )
+
+    async def _on_options_update(
+        self, _hass: HomeAssistant, entry: MeshCoreConfigEntry
+    ) -> None:
+        """Rebuild channel decoder on options update; MQTT client stays running."""
+        new_channels: list[str] = list(entry.options.get(CONF_CHANNELS, []))
+        try:
+            new_decoder = MeshCoreChannelDecoder(new_channels) if new_channels else None
+        except Exception:  # noqa: BLE001
+            _LOGGER.error(
+                "meshcore mqtt: failed to rebuild channel decoder;"
+                " keeping existing configuration",
+                exc_info=True,
+            )
+            return
+        self._decoder = new_decoder
+        channel_summary = ", ".join(sorted(new_channels)) if new_channels else "(none)"
+        _LOGGER.info(
+            "meshcore mqtt: channel list updated — %d channel(s) active: %s",
+            len(new_channels),
+            channel_summary,
         )
 
     async def _handle_message(self, message: aiomqtt.Message) -> None:

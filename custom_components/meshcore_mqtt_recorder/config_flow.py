@@ -157,7 +157,6 @@ class MeshCoreMqttRecorderOptionsFlow(config_entries.OptionsFlow):
                 _LOGGER.warning("Invalid channel name(s) submitted: %s", invalid)
                 errors[CONF_CHANNELS] = "invalid_channel_name"
             else:
-                # TODO Step 6: hot-reload key store + subscriptions without entry reload
                 return self.async_create_entry(title="", data=user_input)
 
         current_channels: list[str] = self._config_entry.options.get(CONF_CHANNELS, [])
