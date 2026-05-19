@@ -218,3 +218,34 @@ These were validated against real Dutch mesh traffic on 2026-05-18 and inform th
 - Observed `payloadType` distribution: type 0 (~77%), type 2 (~20%), invalid/empty (~3%).
 - Same packet `messageHash` observed up to 23 times across different observers within seconds → mandatory dedup.
 - No channel text messages decrypted in the sample window — to be verified during Step 5.
+
+### Step 5 additions — validated 2026-05-19 against meshcoredecoder v0.3.2 source (chrisdavis2110/meshcore-decoder-py)
+
+**Use `decode()`, not `decode_to_json()`.**
+`decode_to_json()` serialises `GroupTextPayload` via `BasePayload.to_dict()` which only
+emits `{type, version, isValid}`. `channel_hash` and `decrypted` content are absent from
+the JSON string. Use `MeshCoreDecoder().decode(raw_hex, options) -> DecodedPacket`.
+
+**Channel identification field:**
+`packet.payload["decoded"].channel_hash` — 2-char lowercase hex (e.g. `"a3"`),
+computed as first byte of `SHA256(secret_key_bytes)`. Build a reverse map at startup:
+`_channel_hash_map: dict[str, str]` — channel_hash → channel_name.
+Hash collision probability is ~16% among 10 channels (birthday paradox on 1 byte);
+warn on collision at construction time, last-registered channel wins.
+
+**Channel hash formula** (matches `ChannelCrypto.calculate_channel_hash()`):
+`hashlib.sha256(bytes.fromhex(key_hex)).digest()[0:1].hex()`
+
+**Failed decryption:** `GroupTextPayload.is_valid` is `True` even on failed decryption
+(set at structure-parse time, not after crypto). Success check: `payload_obj.decrypted is not None`.
+
+**Decrypted GroupText fields:** `{"timestamp": int, "flags": int, "sender": str|None, "message": str}`.
+No `msg_id` — use `DecodedPacket.message_hash` as packet UID.
+
+**Import paths (installed package):**
+```
+from meshcoredecoder import MeshCoreDecoder
+from meshcoredecoder.crypto.key_manager import MeshCoreKeyStore
+from meshcoredecoder.types.crypto import DecryptionOptions
+from meshcoredecoder.types.enums import PayloadType
+```

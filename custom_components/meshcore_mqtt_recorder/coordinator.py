@@ -11,11 +11,13 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNA
 
 from .const import (
     _LOGGER,
+    CONF_CHANNELS,
     CONF_IATA,
     CONF_WS_PATH,
     DEDUP_TTL_SECONDS,
     MQTT_TOPIC_PATTERN,
 )
+from .decoder import MeshCoreChannelDecoder
 from .dedup import HashDedupCache
 from .envelope import EnvelopeParseError, parse_envelope
 from .mqtt_client import MeshCoreMqttClient
@@ -32,7 +34,7 @@ class MeshCoreCoordinator:
 
     Step 3 — owns MeshCoreMqttClient and the background task.
     Step 4 — envelope parsing + dedup cache.
-    Step 5 — add MeshCoreDecoder + key store.
+    Step 5 — MeshCoreChannelDecoder + hashtag key store.
     Steps 7-10 — fan out to sensor updates, events, logbook, JSONL storage.
     """
 
@@ -51,6 +53,10 @@ class MeshCoreCoordinator:
             on_message=self._handle_message,
         )
         self._dedup = HashDedupCache(DEDUP_TTL_SECONDS)
+        channels: list[str] = list(entry.options.get(CONF_CHANNELS, []))
+        self._decoder: MeshCoreChannelDecoder | None = (
+            MeshCoreChannelDecoder(channels) if channels else None
+        )
 
     def async_start(self) -> None:
         """Spawn the MQTT background task tied to this config entry."""
@@ -61,7 +67,7 @@ class MeshCoreCoordinator:
         )
 
     async def _handle_message(self, message: aiomqtt.Message) -> None:
-        """Parse envelope, deduplicate, and log new packets."""
+        """Parse envelope, deduplicate, decode, and log channel messages."""
         payload = (
             bytes(message.payload)
             if isinstance(message.payload, (bytes, bytearray))
@@ -84,4 +90,20 @@ class MeshCoreCoordinator:
             envelope.packet_type,
             envelope.snr,
             len(envelope.raw) // 2,
+        )
+
+        if self._decoder is None:
+            return
+
+        msg = self._decoder.decode_group_text(envelope.raw)
+        if msg is None:
+            return
+
+        _LOGGER.info(
+            "meshcore mqtt: CHANNEL #%s from %s text=%r (origin=%s, snr=%s)",
+            msg.channel,
+            msg.sender or "?",
+            msg.text,
+            envelope.origin,
+            envelope.snr,
         )
