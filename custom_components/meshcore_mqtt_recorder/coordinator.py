@@ -6,6 +6,7 @@ Ties the MQTT client, envelope parser, and decoder together.
 from __future__ import annotations
 
 import contextlib
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
@@ -23,6 +24,7 @@ from .decoder import MeshCoreChannelDecoder
 from .dedup import HashDedupCache
 from .envelope import EnvelopeParseError, parse_envelope
 from .mqtt_client import MeshCoreMqttClient
+from .storage import MeshCoreStorage
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -33,6 +35,27 @@ if TYPE_CHECKING:
     from .data import MeshCoreConfigEntry
     from .decoder import ChannelMessage
     from .envelope import Envelope
+
+
+def _build_persist_payload(
+    msg: ChannelMessage, envelope: Envelope
+) -> dict[str, object]:
+    return {
+        "channel": msg.channel,
+        "text": msg.text,
+        "sender": msg.sender,
+        "msg_id": msg.msg_id,
+        "timestamp": envelope.timestamp,
+        "persisted_at": datetime.now(UTC).isoformat(),
+        "observer": envelope.origin,
+        "observer_id": envelope.origin_id,
+        "snr": envelope.snr,
+        "rssi": envelope.rssi,
+        "packet_type": envelope.packet_type,
+        "path_length": envelope.length,
+        "raw": envelope.raw,
+        "raw_decoded": msg.raw_decoded,
+    }
 
 
 def _build_event_payload(msg: ChannelMessage, envelope: Envelope) -> dict[str, object]:
@@ -82,6 +105,7 @@ class MeshCoreCoordinator:
         self._listeners: dict[
             str, list[Callable[[ChannelMessage, Envelope], None]]
         ] = {}
+        self._storage = MeshCoreStorage(hass)
         entry.async_on_unload(entry.add_update_listener(self._on_options_update))
 
     def async_start(self) -> None:
@@ -180,3 +204,5 @@ class MeshCoreCoordinator:
         self.hass.bus.async_fire(
             EVENT_MESSAGE_RECEIVED, _build_event_payload(msg, envelope)
         )
+
+        await self._storage.append(msg.channel, _build_persist_payload(msg, envelope))
