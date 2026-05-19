@@ -16,6 +16,7 @@ from .const import (
     CONF_IATA,
     CONF_WS_PATH,
     DEDUP_TTL_SECONDS,
+    EVENT_MESSAGE_RECEIVED,
     MQTT_TOPIC_PATTERN,
 )
 from .decoder import MeshCoreChannelDecoder
@@ -32,6 +33,22 @@ if TYPE_CHECKING:
     from .data import MeshCoreConfigEntry
     from .decoder import ChannelMessage
     from .envelope import Envelope
+
+
+def _build_event_payload(msg: ChannelMessage, envelope: Envelope) -> dict[str, object]:
+    return {
+        "channel": msg.channel,
+        "text": msg.text,
+        "sender": msg.sender,
+        "msg_id": msg.msg_id,
+        "timestamp": envelope.timestamp,
+        "observer": envelope.origin,
+        "observer_id": envelope.origin_id,
+        "snr": envelope.snr,
+        "rssi": envelope.rssi,
+        "packet_type": envelope.packet_type,
+        "path_length": envelope.length,
+    }
 
 
 class MeshCoreCoordinator:
@@ -159,3 +176,7 @@ class MeshCoreCoordinator:
                     msg.channel,
                     exc_info=True,
                 )
+
+        self.hass.bus.async_fire(
+            EVENT_MESSAGE_RECEIVED, _build_event_payload(msg, envelope)
+        )

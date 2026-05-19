@@ -37,7 +37,19 @@ SERVICE_GET_HISTORY = "get_history"
 HISTORY_DEFAULT_LIMIT = 100
 HISTORY_MAX_LIMIT = 1000
 
-# HA event name — fired on every successfully decrypted channel message
+# HA event fired on every successfully decrypted channel message.
+# Payload schema (all values are JSON-serialisable primitives):
+#   channel      str           channel name without '#'
+#   text         str           full decrypted message text
+#   sender       str | None    display name from MeshCore packet, or None
+#   msg_id       str | None    DecodedPacket.message_hash used as packet UID
+#   timestamp    str           ISO 8601 observation time from the observer node
+#   observer     str           observer node display name (envelope.origin)
+#   observer_id  str           observer node public key hex (envelope.origin_id)
+#   snr          float | None  signal-to-noise ratio
+#   rssi         float | None  received signal strength
+#   packet_type  str | None    envelope-level type hint
+#   path_length  int | None    number of hops (envelope.length)
 EVENT_MESSAGE_RECEIVED = "meshcore_message_received"
 
 # Sensor entity naming
