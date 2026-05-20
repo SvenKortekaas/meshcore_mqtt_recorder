@@ -121,7 +121,7 @@ In `pyproject.toml` and `manifest.json`:
 
 No other runtime dependencies in v1.
 
-## Build Sequence
+## Build Sequence (v0.1.0 complete)
 
 Build in this order. Each step must be working, tested, and committed before starting the next.
 
@@ -249,3 +249,13 @@ from meshcoredecoder.crypto.key_manager import MeshCoreKeyStore
 from meshcoredecoder.types.crypto import DecryptionOptions
 from meshcoredecoder.types.enums import PayloadType
 ```
+
+## v0.2 Backlog
+
+Known limitations promoted from v0.1.0 README for future work:
+
+- **PSK channels**: support user-supplied hex key map for non-hashtag channels (no key derivation from name).
+- **JSONL rotation**: file-size or date-based rotation; v0.1.0 appends indefinitely.
+- **Multi-entry support**: v0.1.0 assumes one config entry per HA instance; guard against duplicate entries.
+- **Python 3.13 + HA bump**: update test suite and typing once HA moves to 3.13.
+- **Custom Lovelace timeline card**: scrollable message history card — currently only the markdown card workaround exists.
