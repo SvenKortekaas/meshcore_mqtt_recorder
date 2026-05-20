@@ -1,7 +1,9 @@
 {
   "domain": "meshcore_mqtt_recorder",
   "name": "MeshCore MQTT Recorder",
-  "codeowners": ["@svenkortekaas"],
+  "codeowners": [
+    "@svenkortekaas"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/svenkortekaas/meshcore_mqtt_recorder",
