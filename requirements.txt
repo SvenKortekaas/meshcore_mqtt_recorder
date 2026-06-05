@@ -2,4 +2,4 @@
 # pytest-homeassistant-custom-component) deferred to Step 12 —
 # they conflict with aiomqtt 2.x on Python 3.12 and resolving that
 # requires Python 3.13 upgrade. See CLAUDE.md build sequence.
-ruff>=0.4.0
+ruff>=0.15.16
